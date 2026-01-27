@@ -12,7 +12,8 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable for now to avoid issues with inline scripts/styles if any
+    contentSecurityPolicy: false,
+    crossOriginOpenerPolicy: false, // Required for Google OAuth postMessage to work
 }));
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173', // Vite default port
