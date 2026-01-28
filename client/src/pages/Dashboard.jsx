@@ -7,7 +7,7 @@ import 'chart.js/auto';
 import moment from 'moment';
 import {
     FaWallet, FaMoneyBillWave, FaChartLine, FaFilter, FaSort,
-    FaPlus, FaEdit, FaTrash, FaUtensils, FaBus, FaPiggyBank, FaArrowUp, FaArrowDown
+    FaPlus, FaEdit, FaTrash, FaUtensils, FaBus, FaPiggyBank, FaArrowUp, FaArrowDown, FaTimes
 } from 'react-icons/fa';
 import { CHART_COLORS } from '../utils/constants';
 
@@ -35,6 +35,7 @@ const Dashboard = () => {
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isRegretOpen, setIsRegretOpen] = useState(false);
+    const [isLetterOpen, setIsLetterOpen] = useState(false);
 
     // Graph Filter State
     const [graphFilter, setGraphFilter] = useState('30days'); // 30days, month, custom
@@ -108,7 +109,7 @@ const Dashboard = () => {
             const streakRes = await api.get('/behavior/streak');
             setStreak(streakRes.data);
 
-            const letterRes = await api.get('/behavior/latest-letter');
+            const letterRes = await api.get('/behavior/letter/latest');
             setLatestLetter(letterRes.data);
         } catch (err) {
             if (err.response?.status === 404) {
@@ -390,9 +391,13 @@ const Dashboard = () => {
                 </div>
 
                 {/* Future Self Letter Preview */}
-                <div className="card" style={{ background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                    className="card"
+                    style={{ background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                    onClick={() => setIsLetterOpen(true)}
+                >
                     <div style={{ flex: 1, paddingRight: '10px' }}>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#0c4a6e' }}>Past Month Letter</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#0c4a6e' }}>Letter from Future Me</div>
                         <div style={{
                             fontSize: '0.8rem',
                             color: '#0369a1',
@@ -402,7 +407,7 @@ const Dashboard = () => {
                             overflow: 'hidden',
                             fontStyle: 'italic'
                         }}>
-                            {latestLetter ? latestLetter.content : "No transactions logged yet. Your future self is waiting..."}
+                            {latestLetter ? latestLetter.content : "Your future self is writing a letter based on your habits..."}
                         </div>
                     </div>
                     <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
@@ -499,6 +504,32 @@ const Dashboard = () => {
             <SortModal isOpen={isSortOpen} onClose={() => setIsSortOpen(false)} currentSort={currentSort} onApply={handleSortApply} />
             <FilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} currentFilters={currentFilters} onApply={handleFilterApply} />
             {/* <AddExpenseModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAddExpense} /> */}
+
+            {isLetterOpen && latestLetter && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+                    padding: '20px', backdropFilter: 'blur(4px)'
+                }} onClick={() => setIsLetterOpen(false)}>
+                    <div style={{ width: '100%', maxWidth: '600px', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                        <FutureSelfLetter letter={latestLetter} />
+                        <button
+                            onClick={() => setIsLetterOpen(false)}
+                            style={{
+                                position: 'absolute', top: '-15px', right: '-15px',
+                                background: 'white', border: '1px solid #e5e7eb', borderRadius: '50%',
+                                width: '36px', height: '36px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                cursor: 'pointer', color: '#6b7280', zIndex: 1001
+                            }}
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <RegretModal
                 isOpen={isRegretOpen}
                 transactions={pendingRegret}

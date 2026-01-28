@@ -1,21 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaChartPie, FaPlusCircle, FaBars, FaChartBar, FaSignOutAlt, FaUserCircle, FaWallet, FaMoon, FaSun, FaHome } from 'react-icons/fa';
-import { useContext, useState, useEffect } from 'react';
+import { FaChartPie, FaPlusCircle, FaBars, FaChartBar, FaSignOutAlt, FaUserCircle, FaWallet, FaHome } from 'react-icons/fa';
+import { useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
 const TopNavbar = () => {
     const { user, logout } = useContext(AuthContext);
     const location = useLocation();
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-
-    const toggleTheme = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light');
-    };
+        // Ensure the theme is set to light on load and persist it
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+    }, []);
 
     return (
         <nav style={{
@@ -72,9 +68,6 @@ const TopNavbar = () => {
                 {/* Placeholder for Add Modal Trigger if we move it here, though Dashboard has button too */}
                 {/* Profile / Logout */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button onClick={toggleTheme} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex' }}>
-                        {theme === 'light' ? <FaMoon size={20} /> : <FaSun size={20} />}
-                    </button>
                     <span style={{ fontWeight: 500, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{user?.name || 'User'}</span>
                     <FaUserCircle style={{ fontSize: '1.8rem', color: 'var(--text-secondary)' }} />
                     <button onClick={logout} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>

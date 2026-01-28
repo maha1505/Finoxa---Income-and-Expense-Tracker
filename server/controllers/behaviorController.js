@@ -6,10 +6,14 @@ const moment = require('moment');
 
 exports.getLatestLetter = async (req, res) => {
     try {
-        const letter = await FutureSelfLetter.findOne({ user: req.user.id }).sort({ month: -1 });
-        if (!letter) {
-            return res.status(404).json({ msg: 'No letters found' });
+        let letter = await FutureSelfLetter.findOne({ user: req.user.id }).sort({ month: -1 });
+
+        // If no letter exists or the latest letter is not for the current month, generate one
+        const currentMonth = moment().format('YYYY-MM');
+        if (!letter || letter.month !== currentMonth) {
+            letter = await behaviorService.generateMonthlyLetter(req.user.id, currentMonth);
         }
+
         res.json(letter);
     } catch (err) {
         console.error(err.message);
