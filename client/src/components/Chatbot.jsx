@@ -28,7 +28,7 @@ const Chatbot = () => {
 
         // Simulate AI Logic (Simple Rule Engine for now, usually backend or LLM)
         setTimeout(async () => {
-            let botText = "I'm still learning. Try asking 'How much did I spend on food?' or 'What is my balance?'";
+            let botText = "I'm still learning. Try asking about your spending in specific categories or your current balance.";
 
             try {
                 // Fetch latest data context (In real app, backend would process this)

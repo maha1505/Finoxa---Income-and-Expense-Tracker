@@ -41,28 +41,41 @@ const Analytics = () => {
 
     // 2. Line Chart Data (Monthly Trend - Expenses)
     const getLineData = () => {
-        const grouped = {};
+        const incomeMap = {};
+        const expenseMap = {};
+
         // Get last 6 months list
         const months = [];
         for (let i = 5; i >= 0; i--) {
             months.push(moment().subtract(i, 'months').format('MMM YYYY'));
         }
 
-        transactions.filter(t => t.type === 'expense').forEach(t => {
+        transactions.forEach(t => {
             const m = moment(t.date).format('MMM YYYY');
-            grouped[m] = (grouped[m] || 0) + t.amount;
+            if (t.type === 'income') incomeMap[m] = (incomeMap[m] || 0) + t.amount;
+            else expenseMap[m] = (expenseMap[m] || 0) + t.amount;
         });
 
         return {
             labels: months,
-            datasets: [{
-                label: 'Monthly Expenses',
-                data: months.map(m => grouped[m] || 0),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
+            datasets: [
+                {
+                    label: 'Income',
+                    data: months.map(m => incomeMap[m] || 0),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Expenses',
+                    data: months.map(m => expenseMap[m] || 0),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
         };
     };
 
@@ -88,7 +101,7 @@ const Analytics = () => {
                 {
                     label: 'Income',
                     data: months.map(m => incomeMap[m] || 0),
-                    backgroundColor: '#10b981',
+                    backgroundColor: '#3b82f6',
                     borderRadius: 5
                 },
                 {
@@ -112,7 +125,11 @@ const Analytics = () => {
                     <div style={{ height: '300px' }}>
                         <Line
                             data={getLineData()}
-                            options={{ maintainAspectRatio: false }}
+                            options={{
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: true, position: 'top' } },
+                                scales: { y: { min: 0 } }
+                            }}
                         />
                     </div>
                 </div>

@@ -77,7 +77,7 @@ const BudgetPage = () => {
                             onBlur={saveGoal}
                             className="form-input"
                             style={{ width: '150px' }}
-                            placeholder="e.g. 5000"
+                            placeholder="Enter Amount"
                         />
                         {goalStatus === 'saved' && <span style={{ color: 'var(--success)', fontSize: '0.8rem' }}>Saved</span>}
                     </div>

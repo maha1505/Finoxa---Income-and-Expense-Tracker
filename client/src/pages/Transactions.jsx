@@ -8,7 +8,7 @@ const Transactions = () => {
     const [transactions, setTransactions] = useState([]);
     const [formData, setFormData] = useState({
         type: 'expense',
-        category: 'groceries',
+        category: '',
         amount: '',
         description: '',
         date: moment().format('YYYY-MM-DD')
@@ -40,7 +40,7 @@ const Transactions = () => {
             fetchTransactions();
             setFormData({
                 type: 'expense',
-                category: 'groceries',
+                category: '',
                 amount: '',
                 description: '',
                 date: moment().format('YYYY-MM-DD')
@@ -128,7 +128,7 @@ const Transactions = () => {
                                 <button
                                     type="button"
                                     className={`btn ${formData.type === 'expense' ? 'btn-primary' : 'btn-outline'}`}
-                                    onClick={() => setFormData({ ...formData, type: 'expense', category: EXPENSE_CATEGORIES[0] })}
+                                    onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
                                     style={{ flex: 1, backgroundColor: formData.type === 'expense' ? 'var(--danger)' : '', borderColor: formData.type === 'expense' ? 'transparent' : 'var(--danger)', color: formData.type === 'expense' ? 'white' : 'var(--danger)' }}
                                 >
                                     Expense
@@ -142,7 +142,9 @@ const Transactions = () => {
                                 className="form-input"
                                 value={formData.category}
                                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                required
                             >
+                                <option value="" disabled>Select Category</option>
                                 {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map(cat => (
                                     <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
                                 ))}
@@ -189,7 +191,7 @@ const Transactions = () => {
                                     className="btn btn-outline"
                                     onClick={() => {
                                         setEditingId(null);
-                                        setFormData({ type: 'expense', category: 'groceries', amount: '', description: '', date: moment().format('YYYY-MM-DD') });
+                                        setFormData({ type: 'expense', category: '', amount: '', description: '', date: moment().format('YYYY-MM-DD') });
                                     }}
                                     style={{ flex: 1 }}
                                 >

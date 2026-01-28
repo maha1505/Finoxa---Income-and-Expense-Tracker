@@ -36,6 +36,11 @@ const Dashboard = () => {
         paymentMethod: []
     });
 
+    const [currentDateRange, setCurrentDateRange] = useState({
+        start: moment().subtract(29, 'days'),
+        end: moment()
+    });
+
     const [stats, setStats] = useState({
         totalIncome: 0,
         totalExpense: 0,
@@ -73,7 +78,7 @@ const Dashboard = () => {
             calculateStats(originalTransactions, budgets);
             applyGraphFilter(originalTransactions, graphFilter);
         }
-    }, [originalTransactions, budgets, graphFilter]); // Re-run graph logic on filter change
+    }, [originalTransactions, budgets, graphFilter, customDateRange.start, customDateRange.end]); // Re-run graph logic on filter change
 
     const calculateStats = (data, currentBudgets) => {
         // Stats are global (or typically based on "This Month" for relevance, but user asked for Total Income/Expense)
@@ -107,22 +112,27 @@ const Dashboard = () => {
     };
 
     const applyGraphFilter = (data, filter) => {
-        let filtered = [...data];
         const now = moment();
+        let start, end;
 
         if (filter === '30days') {
-            filtered = filtered.filter(t => moment(t.date).isAfter(moment().subtract(30, 'days')));
+            start = moment().subtract(29, 'days').startOf('day');
+            end = moment().endOf('day');
         } else if (filter === 'month') {
-            filtered = filtered.filter(t => moment(t.date).isSame(now, 'month'));
+            start = moment().startOf('month');
+            end = moment().endOf('month');
         } else if (filter === 'custom' && customDateRange.start && customDateRange.end) {
-            filtered = filtered.filter(t => moment(t.date).isBetween(customDateRange.start, customDateRange.end, 'day', '[]'));
+            start = moment(customDateRange.start).startOf('day');
+            end = moment(customDateRange.end).endOf('day');
+        } else {
+            // Default fallback
+            start = moment().subtract(29, 'days').startOf('day');
+            end = moment().endOf('day');
         }
 
-        // Apply List Filters on top of this? 
-        // Usually Dashboard list shows "Recent", so maybe just last 5-10 regardless of graph?
-        // Let's keep the list showing *Graph Filtered* range or just *Recent*?
-        // User asked for "Graph" specifically. Let's make displayTransactions reflect the graph range for consistency.
+        setCurrentDateRange({ start, end });
 
+        const filtered = data.filter(t => moment(t.date).isBetween(start, end, 'day', '[]'));
         applyListFilters(filtered, currentSort, currentFilters);
     };
 
@@ -164,26 +174,52 @@ const Dashboard = () => {
 
     // Graph Data Preparation
     const getGraphData = () => {
-        // Group by Date
         const grouped = {};
         displayTransactions.forEach(t => {
-            const date = moment(t.date).format('MMM DD');
-            if (t.type === 'expense') grouped[date] = (grouped[date] || 0) + t.amount;
+            const dateKey = moment(t.date).format('YYYY-MM-DD');
+            if (!grouped[dateKey]) grouped[dateKey] = { income: 0, expense: 0 };
+            if (t.type === 'income') grouped[dateKey].income += t.amount;
+            else grouped[dateKey].expense += t.amount;
         });
 
-        // Ensure chronological order for labels
-        const sortedLabels = Object.keys(grouped).sort((a, b) => moment(a, 'MMM DD').toDate() - moment(b, 'MMM DD').toDate());
+        const labels = [];
+        const incomeData = [];
+        const expenseData = [];
+
+        let curr = moment(currentDateRange.start).clone();
+        const end = moment(currentDateRange.end).clone();
+
+        while (curr.isSameOrBefore(end, 'day')) {
+            const dateKey = curr.format('YYYY-MM-DD');
+            const label = curr.format('MMM DD');
+
+            labels.push(label);
+            incomeData.push(grouped[dateKey]?.income || 0);
+            expenseData.push(grouped[dateKey]?.expense || 0);
+
+            curr.add(1, 'days');
+        }
 
         return {
-            labels: sortedLabels,
-            datasets: [{
-                label: 'Expenses',
-                data: sortedLabels.map(l => grouped[l]),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
+            labels,
+            datasets: [
+                {
+                    label: 'Income',
+                    data: incomeData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Expenses',
+                    data: expenseData,
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
         };
     };
 
@@ -283,7 +319,11 @@ const Dashboard = () => {
                     <div style={{ height: '300px' }}>
                         <Line
                             data={getGraphData()}
-                            options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }}
+                            options={{
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: true, position: 'top' } },
+                                scales: { y: { min: 0 } }
+                            }}
                         />
                     </div>
                 </div>

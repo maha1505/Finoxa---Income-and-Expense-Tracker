@@ -8,6 +8,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Reports = () => {
     const [data, setData] = useState({ incomeCategories: {}, expenseCategories: {} });
+    const [viewType, setViewType] = useState('expense'); // 'expense' or 'income'
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,25 +40,22 @@ const Reports = () => {
         }
     };
 
-    const expenseTotal = calculateTotal(data.expenseCategories);
+    const total = calculateTotal(viewType === 'expense' ? data.expenseCategories : data.incomeCategories);
 
     // Sort categories by amount desc
-    const sortedCategories = Object.entries(data.expenseCategories)
+    const sortedCategories = Object.entries(viewType === 'expense' ? data.expenseCategories : data.incomeCategories)
         .sort(([, a], [, b]) => b - a);
 
+    const expenseColors = ['#ef4444', '#f87171', '#fb923c', '#fca5a5', '#fecaca', '#fee2e2'];
+    const incomeColors = ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe', '#eff6ff'];
+    const currentColors = viewType === 'expense' ? expenseColors : incomeColors;
+
     const chartData = {
-        labels: Object.keys(data.expenseCategories),
+        labels: sortedCategories.map(([cat]) => cat.charAt(0).toUpperCase() + cat.slice(1)),
         datasets: [
             {
-                data: Object.values(data.expenseCategories),
-                backgroundColor: [
-                    '#3b82f6', // Blue
-                    '#10b981', // Green
-                    '#f59e0b', // Yellow/Orange
-                    '#ec4899', // Pink
-                    '#8b5cf6', // Violet
-                    '#6b7280', // Gray
-                ],
+                data: sortedCategories.map(([, amt]) => amt),
+                backgroundColor: currentColors,
                 borderWidth: 0,
                 cutout: '75%', // Thinner ring
                 borderRadius: 20, // Rounded ends
@@ -70,8 +68,31 @@ const Reports = () => {
             {/* Breakdown Chart */}
             <div className="card" style={{ padding: '25px', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Breakdown</h2>
-                    <FaCalendarAlt style={{ color: '#9ca3af' }} />
+                    <div style={{ display: 'flex', gap: '10px', background: '#f3f4f6', padding: '4px', borderRadius: '8px' }}>
+                        <button
+                            onClick={() => setViewType('expense')}
+                            style={{
+                                padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                                background: viewType === 'expense' ? 'white' : 'transparent',
+                                color: viewType === 'expense' ? '#ef4444' : '#6b7280',
+                                fontWeight: 'bold', boxShadow: viewType === 'expense' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
+                            Expenses
+                        </button>
+                        <button
+                            onClick={() => setViewType('income')}
+                            style={{
+                                padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+                                background: viewType === 'income' ? 'white' : 'transparent',
+                                color: viewType === 'income' ? '#3b82f6' : '#6b7280',
+                                fontWeight: 'bold', boxShadow: viewType === 'income' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
+                            Income
+                        </button>
+                    </div>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{viewType === 'expense' ? 'Expense' : 'Income'} Breakdown</h2>
                 </div>
 
                 <div style={{ position: 'relative', height: '300px', width: '300px', margin: '0 auto' }}>
@@ -83,25 +104,21 @@ const Reports = () => {
                         transform: 'translate(-50%, -50%)',
                         textAlign: 'center'
                     }}>
-                        <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>${expenseTotal.toLocaleString()}</div>
-                        <div style={{ color: '#9ca3af', fontSize: '0.9rem' }}>from all accounts</div>
+                        <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: viewType === 'expense' ? '#ef4444' : '#3b82f6' }}>₹{total.toLocaleString()}</div>
+                        <div style={{ color: '#9ca3af', fontSize: '0.9rem' }}>total {viewType}</div>
                     </div>
                 </div>
 
-                <div style={{ marginTop: 'auto', paddingTop: '30px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
-                    {/* Legend (Simplified) */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }}></div>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Groceries</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></div>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Shopping</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b' }}></div>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Travel</span>
-                    </div>
+                <div style={{ marginTop: 'auto', paddingTop: '30px', display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                    {/* Dynamic Legend based on sortedCategories */}
+                    {sortedCategories.slice(0, 3).map(([category], index) => {
+                        return (
+                            <div key={category} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: currentColors[index % currentColors.length] }}></div>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'capitalize' }}>{category}</span>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -114,9 +131,8 @@ const Reports = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                     {sortedCategories.map(([category, amount], index) => {
-                        const percentage = ((amount / expenseTotal) * 100).toFixed(1);
-                        const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#6b7280'];
-                        const color = colors[index % colors.length];
+                        const percentage = total > 0 ? ((amount / total) * 100).toFixed(1) : 0;
+                        const color = currentColors[index % currentColors.length];
 
                         return (
                             <div key={category}>
@@ -130,7 +146,7 @@ const Reports = () => {
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            color: '#374151'
+                                            color: color
                                         }}>
                                             {getIcon(category)}
                                         </div>
@@ -138,7 +154,7 @@ const Reports = () => {
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <span style={{ color: '#9ca3af', marginRight: '10px' }}>{percentage}%</span>
-                                        <span style={{ fontWeight: 'bold' }}>| ${amount.toLocaleString()}</span>
+                                        <span style={{ fontWeight: 'bold' }}>| ₹{amount.toLocaleString()}</span>
                                     </div>
                                 </div>
                                 {/* Progress Bar */}
@@ -149,7 +165,7 @@ const Reports = () => {
                         );
                     })}
                     {sortedCategories.length === 0 && (
-                        <div style={{ textAlign: 'center', color: '#9ca3af' }}>No expense data to display.</div>
+                        <div style={{ textAlign: 'center', color: '#9ca3af' }}>No {viewType} data to display.</div>
                     )}
                 </div>
             </div>

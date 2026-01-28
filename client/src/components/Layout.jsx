@@ -1,5 +1,5 @@
 import TopNavbar from './TopNavbar';
-import Chatbot from './Chatbot';
+
 
 const Layout = ({ children }) => {
     return (
@@ -14,7 +14,7 @@ const Layout = ({ children }) => {
             }}>
                 {children}
             </main>
-            <Chatbot />
+
         </div>
     );
 };
