@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { Line, Doughnut } from 'react-chartjs-2';
@@ -19,6 +20,7 @@ import FutureSelfLetter from '../components/FutureSelfLetter';
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [originalTransactions, setOriginalTransactions] = useState([]);
     const [displayTransactions, setDisplayTransactions] = useState([]);
     const [budgets, setBudgets] = useState([]);
@@ -32,6 +34,7 @@ const Dashboard = () => {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isRegretOpen, setIsRegretOpen] = useState(false);
 
     // Graph Filter State
     const [graphFilter, setGraphFilter] = useState('30days'); // 30days, month, custom
@@ -221,12 +224,14 @@ const Dashboard = () => {
         // It uses `originalTransactions` if I call it like that.
     };
 
+    /*
     const handleAddExpense = async (formData) => {
         try {
             await api.post('/transactions', formData);
             fetchDashboardData();
         } catch (err) { console.error(err); }
     };
+    */
 
     // Graph Data Preparation
     const getGraphData = () => {
@@ -300,7 +305,7 @@ const Dashboard = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>DASHBOARD</h1>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => setIsAddOpen(true)} className="btn btn-primary" style={{ gap: '5px' }}>
+                    <button onClick={() => navigate('/transactions')} className="btn btn-primary" style={{ gap: '5px' }}>
                         <FaPlus /> Add
                     </button>
                 </div>
@@ -370,12 +375,8 @@ const Dashboard = () => {
                             moment(t.date).isAfter(moment().subtract(48, 'hours')) &&
                             !t.regretStatus
                         );
-
-                        if (reviewable.length === 0) {
-                            alert("No recent transactions to review. You're doing great!");
-                        } else {
-                            setPendingRegret(reviewable);
-                        }
+                        setPendingRegret(reviewable);
+                        setIsRegretOpen(true);
                     }}
                 >
                     <div>
@@ -497,11 +498,12 @@ const Dashboard = () => {
 
             <SortModal isOpen={isSortOpen} onClose={() => setIsSortOpen(false)} currentSort={currentSort} onApply={handleSortApply} />
             <FilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} currentFilters={currentFilters} onApply={handleFilterApply} />
-            <AddExpenseModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAddExpense} />
+            {/* <AddExpenseModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAddExpense} /> */}
             <RegretModal
+                isOpen={isRegretOpen}
                 transactions={pendingRegret}
                 onEvaluate={handleRegretEvaluation}
-                onClose={() => setPendingRegret([])}
+                onClose={() => setIsRegretOpen(false)}
                 scores={scores}
                 duration={scoreDuration}
                 onDurationChange={setScoreDuration}

@@ -1,21 +1,47 @@
-import React, { useState } from 'react';
-import { FaTimes, FaPlus, FaCamera } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaTimes, FaPlus, FaSave } from 'react-icons/fa';
 import moment from 'moment';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../utils/constants';
 
-const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
-    if (!isOpen) return null;
-
+const AddExpenseModal = ({ isOpen, onClose, onAdd, editData = null }) => {
     const [formData, setFormData] = useState({
         amount: '',
         category: '',
         customCategory: '',
         date: moment().format('YYYY-MM-DD'),
-        notes: '',
+        description: '',
         type: 'expense',
         isRecurring: false,
         frequency: 'monthly'
     });
+
+    useEffect(() => {
+        if (editData) {
+            setFormData({
+                amount: editData.amount || '',
+                category: editData.category || '',
+                customCategory: '',
+                date: moment(editData.date).format('YYYY-MM-DD'),
+                description: editData.description || '',
+                type: editData.type || 'expense',
+                isRecurring: editData.isRecurring || false,
+                frequency: editData.frequency || 'monthly'
+            });
+        } else {
+            setFormData({
+                amount: '',
+                category: '',
+                customCategory: '',
+                date: moment().format('YYYY-MM-DD'),
+                description: '',
+                type: 'expense',
+                isRecurring: false,
+                frequency: 'monthly'
+            });
+        }
+    }, [editData, isOpen]);
+
+    if (!isOpen) return null;
 
     const categories = formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
@@ -25,7 +51,9 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
 
         onAdd({ ...formData, category: finalCategory });
         onClose();
-        setFormData({ amount: '', category: '', customCategory: '', date: moment().format('YYYY-MM-DD'), notes: '', type: 'expense', isRecurring: false, frequency: 'monthly' });
+        if (!editData) {
+            setFormData({ amount: '', category: '', customCategory: '', date: moment().format('YYYY-MM-DD'), description: '', type: 'expense', isRecurring: false, frequency: 'monthly' });
+        }
     };
 
     return (
@@ -35,17 +63,18 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
         }}>
             <div className="card" style={{ width: '450px', padding: '0', overflow: 'hidden' }}>
                 <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb', textAlign: 'center', position: 'relative' }}>
-                    <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>Add {formData.type === 'income' ? 'Income' : 'Expense'}</h3>
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>
+                        {editData ? 'Edit' : 'Add'} {formData.type === 'income' ? 'Income' : 'Expense'}
+                    </h3>
                 </div>
 
                 <div style={{ padding: '20px' }}>
-
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', gap: '10px' }}>
                         <button
                             type="button"
                             className={`btn ${formData.type === 'expense' ? 'btn-primary' : 'btn-outline'}`}
                             style={{ flex: 1, backgroundColor: formData.type === 'expense' ? 'var(--danger)' : '', borderColor: formData.type === 'expense' ? 'transparent' : 'var(--danger)', color: formData.type === 'expense' ? 'white' : 'var(--danger)' }}
-                            onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
+                            onClick={() => setFormData({ ...formData, type: 'expense' })}
                         >
                             Expense
                         </button>
@@ -53,7 +82,7 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                             type="button"
                             className={`btn ${formData.type === 'income' ? 'btn-primary' : 'btn-outline'}`}
                             style={{ flex: 1 }}
-                            onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
+                            onClick={() => setFormData({ ...formData, type: 'income' })}
                         >
                             Income
                         </button>
@@ -112,13 +141,14 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label" style={{ fontSize: '0.85rem', color: '#6b7280' }}>Notes (optional)</label>
+                            <label className="form-label" style={{ fontSize: '0.85rem', color: '#6b7280' }}>Description</label>
                             <textarea
                                 className="form-input"
-                                placeholder="Write something..."
-                                value={formData.notes}
-                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                placeholder="Describe the transaction..."
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 rows="2"
+                                required
                             />
                         </div>
 
@@ -149,11 +179,11 @@ const AddExpenseModal = ({ isOpen, onClose, onAdd }) => {
                         </div>
 
                         <div style={{ display: 'flex', gap: '10px' }}>
-                            <button type="submit" className="btn btn-primary" style={{ flex: 1, gap: '5px' }}>
-                                <FaPlus /> ADD
+                            <button type="submit" className="btn btn-primary" style={{ flex: 2, gap: '5px' }}>
+                                {editData ? <><FaSave /> UPDATE</> : <><FaPlus /> ADD</>}
                             </button>
-                            <button type="button" onClick={onClose} className="btn" style={{ flex: 1, background: 'var(--danger)', color: 'white', gap: '5px' }}>
-                                <FaTimes /> CANCEL
+                            <button type="button" onClick={onClose} className="btn" style={{ flex: 1, background: '#f3f4f6', color: '#4b5563', gap: '5px' }}>
+                                CANCEL
                             </button>
                         </div>
                     </form>

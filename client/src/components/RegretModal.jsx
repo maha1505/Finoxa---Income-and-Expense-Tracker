@@ -1,82 +1,164 @@
 import React from 'react';
 
-const RegretModal = ({ transactions, onEvaluate, onClose, scores, duration, onDurationChange }) => {
-    if (!transactions || transactions.length === 0) return null;
+const RegretModal = ({ isOpen, transactions, onEvaluate, onClose, scores, duration, onDurationChange }) => {
+    if (!isOpen) return null;
+
+    const modalOverlayStyle = {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        padding: '20px'
+    };
+
+    const modalContentStyle = {
+        backgroundColor: 'var(--card-bg)',
+        color: 'var(--text-primary)',
+        borderRadius: '16px',
+        maxWidth: '600px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow)',
+        display: 'flex',
+        flexDirection: 'column',
+    };
+
+    const sectionStyle = {
+        padding: '24px',
+        borderBottom: '1px solid #f3f4f6'
+    };
+
+    const listStyle = {
+        padding: '24px',
+        overflowY: 'auto',
+        flex: 1,
+        maxHeight: '50vh',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+    };
+
+    const cardStyle = {
+        padding: '16px',
+        background: 'rgba(0,0,0,0.02)',
+        borderRadius: '12px',
+        border: '1px solid #f3f4f6'
+    };
+
+    const statsGridStyle = {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '12px',
+        padding: '20px',
+        background: '#f9fafb',
+        borderRadius: '12px'
+    };
 
     const topRegretCategory = Object.entries(scores?.categoryRegret || {}).reduce((a, b) => a[1].regrets > b[1].regrets ? a : b, [null, { regrets: 0 }])[0];
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-300">
-                <div className="p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Review Recent Transactions</h2>
-                        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                            ✕
-                        </button>
-                    </div>
+        <div style={modalOverlayStyle} onClick={onClose}>
+            <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div style={{ ...sectionStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Review Recent Transactions</h2>
+                    <button
+                        onClick={onClose}
+                        style={{ background: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', padding: '4px' }}
+                    >
+                        ✕
+                    </button>
+                </div>
 
-                    <div className="max-h-[50vh] overflow-y-auto space-y-4 pr-2 mb-6">
-                        {transactions.map(t => (
-                            <div key={t._id} className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-                                <div className="flex justify-between items-start mb-3">
+                {/* Body / List */}
+                <div style={listStyle}>
+                    {transactions && transactions.length > 0 ? (
+                        transactions.map(t => (
+                            <div key={t._id} style={cardStyle}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                                     <div>
-                                        <div className="font-bold text-gray-900 dark:text-white">₹{t.amount}</div>
-                                        <div className="text-sm text-gray-500">{t.description}</div>
+                                        <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>₹{t.amount}</div>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t.description || 'No description'}</div>
                                     </div>
-                                    <div className="text-xs font-medium uppercase text-gray-400">{t.category}</div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                            {t.category}
+                                        </div>
+                                        <button
+                                            onClick={() => onEvaluate(t._id, 'Neutral')}
+                                            style={{ background: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', textDecoration: 'underline', marginTop: '4px', padding: 0 }}
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                                     <button
                                         onClick={() => onEvaluate(t._id, 'Worth it')}
-                                        className="py-2 px-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors"
+                                        style={{ padding: '8px', fontSize: '0.8rem', fontWeight: 'bold', borderRadius: '8px', background: '#ecfdf5', color: '#059669' }}
                                     >
                                         Worth it
                                     </button>
                                     <button
                                         onClick={() => onEvaluate(t._id, 'Neutral')}
-                                        className="py-2 px-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                                        style={{ padding: '8px', fontSize: '0.8rem', fontWeight: 'bold', borderRadius: '8px', background: '#f3f4f6', color: '#4b5563' }}
                                     >
                                         Neutral
                                     </button>
                                     <button
                                         onClick={() => onEvaluate(t._id, 'Regret')}
-                                        className="py-2 px-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
+                                        style={{ padding: '8px', fontSize: '0.8rem', fontWeight: 'bold', borderRadius: '8px', background: '#fef2f2', color: '#dc2626' }}
                                     >
                                         Regret
                                     </button>
                                 </div>
                             </div>
-                        ))}
+                        ))
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '40px 0', opacity: 0.6 }}>
+                            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✨</div>
+                            <div style={{ fontWeight: 'bold', color: 'var(--text-secondary)' }}>No transactions to review</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>You're staying on top of your reflections!</div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer / Stats */}
+                <div style={{ padding: '24px', borderTop: '1px solid #f3f4f6' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', margin: 0 }}>Statistics</h3>
+                        <select
+                            value={duration}
+                            onChange={(e) => onDurationChange(e.target.value)}
+                            style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e5e7eb', background: 'white' }}
+                        >
+                            <option value="day">Today</option>
+                            <option value="month">This Month</option>
+                            <option value="">All Time</option>
+                        </select>
                     </div>
 
-                    <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Regret Statistics</h3>
-                            <select
-                                value={duration}
-                                onChange={(e) => onDurationChange(e.target.value)}
-                                className="text-xs border-none bg-gray-100 dark:bg-gray-700 rounded-md p-1 focus:ring-0"
-                            >
-                                <option value="day">Today</option>
-                                <option value="month">This Month</option>
-                                <option value="">All Time</option>
-                            </select>
+                    <div style={statsGridStyle}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{scores.score.toFixed(0)}%</div>
+                            <div style={{ fontSize: '0.6rem', fontWeight: 'bold', color: 'rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>Discipline</div>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="p-3 bg-primary/5 rounded-xl text-center">
-                                <div className="text-lg font-bold text-primary">{scores.score.toFixed(0)}%</div>
-                                <div className="text-[10px] uppercase font-bold text-primary/60">Discipline</div>
-                            </div>
-                            <div className="p-3 bg-primary/5 rounded-xl text-center">
-                                <div className="text-lg font-bold text-primary">{scores.regretPercentage.toFixed(0)}%</div>
-                                <div className="text-[10px] uppercase font-bold text-primary/60">Regret</div>
-                            </div>
-                            <div className="p-3 bg-primary/5 rounded-xl text-center">
-                                <div className="text-lg font-bold text-primary truncate">{topRegretCategory || 'None'}</div>
-                                <div className="text-[10px] uppercase font-bold text-primary/60">Top Regret</div>
-                            </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>{scores.regretPercentage.toFixed(0)}%</div>
+                            <div style={{ fontSize: '0.6rem', fontWeight: 'bold', color: 'rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>Regret</div>
+                        </div>
+                        <div style={{ textAlign: 'center', overflow: 'hidden' }}>
+                            <div style={{ fontWeight: 'bold', color: 'var(--primary-color)', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{topRegretCategory || 'None'}</div>
+                            <div style={{ fontSize: '0.6rem', fontWeight: 'bold', color: 'rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>Top Regret</div>
                         </div>
                     </div>
                 </div>
