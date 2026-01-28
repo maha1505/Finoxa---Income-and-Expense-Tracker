@@ -26,13 +26,12 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.error(err));
 
-const authRoutes = require('./routes/auth');
-const transactionRoutes = require('./routes/transactions');
 
 // Routes Configuration
-app.use('/api/auth', authRoutes);
-app.use('/api/transactions', transactionRoutes);
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/budgets', require('./routes/budgets'));
+app.use('/api/behavior', require('./routes/behavior'));
 
 // Serve Static Assets in Production
 if (process.env.NODE_ENV === 'production') {

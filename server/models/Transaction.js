@@ -35,6 +35,14 @@ const TransactionSchema = new mongoose.Schema({
         type: String,
         enum: ['daily', 'weekly', 'monthly', 'yearly', null],
         default: null
+    },
+    regretStatus: {
+        type: String,
+        enum: ['Worth it', 'Neutral', 'Regret', null],
+        default: null
+    },
+    regretEvaluatedAt: {
+        type: Date
     }
 });
 

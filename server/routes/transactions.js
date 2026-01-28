@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addTransaction, getTransactions, deleteTransaction, getDashboardData, getReportsData } = require('../controllers/transactionController');
+const { addTransaction, getTransactions, deleteTransaction, getDashboardData, getReportsData, updateRegretStatus } = require('../controllers/transactionController');
 const auth = require('../middleware/authMiddleware');
 
 // @route   POST api/transactions
@@ -17,6 +17,11 @@ router.get('/', auth, getTransactions);
 // @desc    Delete transaction
 // @access  Private
 router.delete('/:id', auth, deleteTransaction);
+
+// @route   PUT api/transactions/regret/:id
+// @desc    Update regret status
+// @access  Private
+router.put('/regret/:id', auth, updateRegretStatus);
 
 // @route   PUT api/transactions/:id
 // @desc    Update transaction

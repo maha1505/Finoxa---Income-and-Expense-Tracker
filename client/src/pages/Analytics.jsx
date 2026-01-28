@@ -7,15 +7,19 @@ import { CHART_COLORS } from '../utils/constants';
 
 const Analytics = () => {
     const [transactions, setTransactions] = useState([]);
+    const [reportData, setReportData] = useState(null);
 
     useEffect(() => {
-        const fetchTransactions = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/transactions');
-                setTransactions(res.data);
+                const transRes = await api.get('/transactions');
+                setTransactions(transRes.data);
+
+                const reportRes = await api.get('/transactions/reports');
+                setReportData(reportRes.data);
             } catch (err) { console.error(err); }
         };
-        fetchTransactions();
+        fetchData();
     }, []);
 
     // 1. Pie Chart Data (Category Split)
@@ -114,8 +118,32 @@ const Analytics = () => {
         };
     };
 
+    // 4. Regret Index Insights (Category-wise Regret Percentage)
+    const getRegretCategoryData = () => {
+        if (!reportData?.categoryRegret) return { labels: [], datasets: [] };
+
+        const categories = Object.keys(reportData.categoryRegret);
+        const regretData = categories.map(cat => {
+            const stats = reportData.categoryRegret[cat];
+            const totalEvaluated = (stats['Worth it'] || 0) + (stats['Neutral'] || 0) + (stats['Regret'] || 0);
+            return totalEvaluated > 0 ? ((stats['Regret'] || 0) / totalEvaluated) * 100 : 0;
+        });
+
+        return {
+            labels: categories,
+            datasets: [{
+                label: 'Regret %',
+                data: regretData,
+                backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                borderColor: '#ef4444',
+                borderWidth: 1,
+                borderRadius: 5
+            }]
+        };
+    };
+
     return (
-        <div style={{ paddingBottom: '50px' }}>
+        <div style={{ paddingBottom: '100px' }}>
             <h1 style={{ marginBottom: '30px', fontSize: '1.8rem', fontWeight: 'bold' }}>Visual Analytics</h1>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
@@ -129,6 +157,37 @@ const Analytics = () => {
                                 maintainAspectRatio: false,
                                 plugins: { legend: { display: true, position: 'top' } },
                                 scales: { y: { min: 0 } }
+                            }}
+                        />
+                    </div>
+                </div>
+
+                {/* Regret Index Highlights */}
+                <div className="card" style={{ gridColumn: 'span 2', background: '#fff5f5' }}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-red-900">Regret Index Analysis</h3>
+                        <div className="flex gap-4">
+                            <div className="text-center">
+                                <div className="text-2xl font-black text-red-600">
+                                    {reportData ? ((reportData.regretStats['Regret'] / (Object.values(reportData.regretStats).reduce((a, b) => a + b, 0) || 1)) * 100).toFixed(0) : 0}%
+                                </div>
+                                <div className="text-[10px] uppercase font-bold text-red-800/60">Overall Regret</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style={{ height: '300px' }}>
+                        <Bar
+                            data={getRegretCategoryData()}
+                            options={{
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        max: 100,
+                                        ticks: { callback: (v) => v + '%' }
+                                    }
+                                }
                             }}
                         />
                     </div>

@@ -13,12 +13,20 @@ import { CHART_COLORS } from '../utils/constants';
 import SortModal from '../components/SortModal';
 import FilterModal from '../components/FilterModal';
 import AddExpenseModal from '../components/AddExpenseModal';
+import RegretModal from '../components/RegretModal';
+import StreakDisplay from '../components/StreakDisplay';
+import FutureSelfLetter from '../components/FutureSelfLetter';
 
 const Dashboard = () => {
     const { user } = useContext(AuthContext);
     const [originalTransactions, setOriginalTransactions] = useState([]);
     const [displayTransactions, setDisplayTransactions] = useState([]);
     const [budgets, setBudgets] = useState([]);
+
+    // Behavior Features State
+    const [pendingRegret, setPendingRegret] = useState([]);
+    const [streak, setStreak] = useState(null);
+    const [latestLetter, setLatestLetter] = useState(null);
 
     // Modals
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -49,26 +57,73 @@ const Dashboard = () => {
         expenseChange: 0
     });
 
+    const [scores, setScores] = useState({ score: 100, regretPercentage: 0, totalEvaluated: 0, categoryRegret: {} });
+    const [scoreDuration, setScoreDuration] = useState('month');
+
     useEffect(() => {
         if (user) {
-            fetchTransactions();
+            fetchDashboardData();
             fetchBudgets();
+            fetchBehaviorData();
+            fetchRegretScores();
         }
-    }, [user]);
+    }, [user, scoreDuration]);
 
-    const fetchTransactions = async () => {
+    const fetchRegretScores = async () => {
         try {
-            const res = await api.get('/transactions');
-            setOriginalTransactions(res.data);
+            const res = await api.get(`/behavior/scores?duration=${scoreDuration}`);
+            setScores(res.data);
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchDashboardData = async () => {
+        try {
+            const res = await api.get('/transactions/dashboard');
+            const transactions = res.data.recentTransactions || [];
+            setOriginalTransactions(transactions);
+            setPendingRegret(res.data.pendingRegretEvaluations || []);
+
+            // Recalculate stats locally to merge budget data if budgets are already loaded
+            calculateStats(transactions, budgets);
+
             // Initial Logic Application
-            applyGraphFilter(res.data, '30days');
+            applyGraphFilter(transactions, '30days');
         } catch (err) { console.error(err); }
     };
 
     const fetchBudgets = async () => {
         try {
-            const res = await api.get(`/budgets?month=${moment().format('YYYY-MM')}`);
+            const res = await api.get('/budgets');
             setBudgets(res.data);
+            // Re-calculate stats with new budget data
+            calculateStats(originalTransactions, res.data);
+        } catch (err) { console.error(err); }
+    };
+
+    const fetchBehaviorData = async () => {
+        try {
+            const streakRes = await api.get('/behavior/streak');
+            setStreak(streakRes.data);
+
+            const letterRes = await api.get('/behavior/latest-letter');
+            setLatestLetter(letterRes.data);
+        } catch (err) {
+            if (err.response?.status === 404) {
+                setLatestLetter(null);
+            } else {
+                console.error(err);
+            }
+        }
+    };
+
+    const handleRegretEvaluation = async (id, status) => {
+        try {
+            await api.put(`/transactions/regret/${id}`, { regretStatus: status });
+            // Remove from local pending
+            setPendingRegret(prev => prev.filter(t => t._id !== id));
+            // Refresh data
+            fetchDashboardData();
+            fetchRegretScores();
         } catch (err) { console.error(err); }
     };
 
@@ -103,11 +158,11 @@ const Dashboard = () => {
         else if (expense > 0) expenseChange = 100;
 
         setStats({
-            totalIncome: income,
-            totalExpense: expense,
-            budgetBalance: budgetBalance,
-            totalBudget: totalBudgetLimit,
-            expenseChange
+            totalIncome: income || 0,
+            totalExpense: expense || 0,
+            budgetBalance: budgetBalance || (income - expense) || 0,
+            totalBudget: totalBudgetLimit || 0,
+            expenseChange: expenseChange || 0
         });
     };
 
@@ -132,6 +187,7 @@ const Dashboard = () => {
 
         setCurrentDateRange({ start, end });
 
+        if (!data) return;
         const filtered = data.filter(t => moment(t.date).isBetween(start, end, 'day', '[]'));
         applyListFilters(filtered, currentSort, currentFilters);
     };
@@ -168,7 +224,7 @@ const Dashboard = () => {
     const handleAddExpense = async (formData) => {
         try {
             await api.post('/transactions', formData);
-            fetchTransactions();
+            fetchDashboardData();
         } catch (err) { console.error(err); }
     };
 
@@ -240,7 +296,7 @@ const Dashboard = () => {
     };
 
     return (
-        <div style={{ paddingBottom: '50px' }}>
+        <div style={{ paddingBottom: '100px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>DASHBOARD</h1>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -250,9 +306,8 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Metrics Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-                {/* Total Income */}
+            {/* Row 1: Main Metrics */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                 <div className="card" style={{ background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#065f46' }}>Total Income</div>
@@ -263,7 +318,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Total Expense */}
                 <div className="card" style={{ background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#991b1b' }}>Total Expense</div>
@@ -277,7 +331,6 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Balance (Budget Remaining) */}
                 <div className="card" style={{ background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#075985' }}>Budget Balance</div>
@@ -288,6 +341,71 @@ const Dashboard = () => {
                     </div>
                     <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
                         <FaWallet />
+                    </div>
+                </div>
+            </div>
+
+            {/* Row 2: Behavior Metrics */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+                {/* Discipline Streaks */}
+                <div className="card" style={{ background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#9a3412' }}>Discipline Streak</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ea580c' }}>{streak?.currentStreak || 0} Days</div>
+                        <div style={{ fontSize: '0.75rem', color: '#c2410c' }}>🔥 Staying on track</div>
+                    </div>
+                    <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ea580c' }}>
+                        <FaChartLine />
+                    </div>
+                </div>
+
+                {/* Regret Index */}
+                <div
+                    className="card"
+                    style={{ background: '#faf5ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+                    onClick={() => {
+                        // Filter transactions from past 48 hours for a wider reflection window
+                        const reviewable = originalTransactions.filter(t =>
+                            t.type === 'expense' &&
+                            moment(t.date).isAfter(moment().subtract(48, 'hours')) &&
+                            !t.regretStatus
+                        );
+
+                        if (reviewable.length === 0) {
+                            alert("No recent transactions to review. You're doing great!");
+                        } else {
+                            setPendingRegret(reviewable);
+                        }
+                    }}
+                >
+                    <div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#581c87' }}>Regret Index</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#9333ea' }}>Review Past 24h</div>
+                        <div style={{ fontSize: '0.75rem', color: '#7e22ce' }}>Reflect on your spending</div>
+                    </div>
+                    <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9333ea' }}>
+                        <FaFilter />
+                    </div>
+                </div>
+
+                {/* Future Self Letter Preview */}
+                <div className="card" style={{ background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ flex: 1, paddingRight: '10px' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#0c4a6e' }}>Past Month Letter</div>
+                        <div style={{
+                            fontSize: '0.8rem',
+                            color: '#0369a1',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            fontStyle: 'italic'
+                        }}>
+                            {latestLetter ? latestLetter.content : "No transactions logged yet. Your future self is waiting..."}
+                        </div>
+                    </div>
+                    <div style={{ width: '40px', height: '40px', background: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
+                        <FaEdit />
                     </div>
                 </div>
             </div>
@@ -375,28 +493,18 @@ const Dashboard = () => {
                         </div>
                     </div>
                 ))}
-                {displayTransactions.length === 0 && (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#9ca3af' }}>No transactions in this range</div>
-                )}
             </div>
 
-            {/* Modals */}
-            <SortModal
-                isOpen={isSortOpen}
-                onClose={() => setIsSortOpen(false)}
-                currentSort={currentSort}
-                onApply={handleSortApply}
-            />
-            <FilterModal
-                isOpen={isFilterOpen}
-                onClose={() => setIsFilterOpen(false)}
-                currentFilters={currentFilters}
-                onApply={handleFilterApply}
-            />
-            <AddExpenseModal
-                isOpen={isAddOpen}
-                onClose={() => setIsAddOpen(false)}
-                onAdd={handleAddExpense}
+            <SortModal isOpen={isSortOpen} onClose={() => setIsSortOpen(false)} currentSort={currentSort} onApply={handleSortApply} />
+            <FilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} currentFilters={currentFilters} onApply={handleFilterApply} />
+            <AddExpenseModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAddExpense} />
+            <RegretModal
+                transactions={pendingRegret}
+                onEvaluate={handleRegretEvaluation}
+                onClose={() => setPendingRegret([])}
+                scores={scores}
+                duration={scoreDuration}
+                onDurationChange={setScoreDuration}
             />
         </div>
     );
