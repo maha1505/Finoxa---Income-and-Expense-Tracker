@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(helmet({
     contentSecurityPolicy: false,
-    crossOriginOpenerPolicy: false, // Required for Google OAuth postMessage to work
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
 }));
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173', // Vite default port
@@ -45,6 +45,12 @@ if (process.env.NODE_ENV === 'production') {
         res.send('Expense Tracker API is running');
     });
 }
+
+// Error Handler
+app.use((err, req, res, next) => {
+    console.error('Error Stack:', err.stack);
+    res.status(500).json({ msg: 'Server Error', error: err.message });
+});
 
 // Start Server
 app.listen(PORT, () => {

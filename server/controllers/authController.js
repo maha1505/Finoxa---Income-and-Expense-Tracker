@@ -71,8 +71,8 @@ exports.googleLogin = async (req, res) => {
         res.json({ token: authToken, user: { id: user.id, name: user.name, email: user.email } });
 
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Google Auth Error');
+        console.error('Google Auth Controller Error:', err);
+        res.status(500).json({ msg: 'Google Auth Error', error: err.message });
     }
 };
 
