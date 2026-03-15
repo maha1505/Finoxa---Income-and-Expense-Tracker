@@ -146,7 +146,7 @@ const Analytics = () => {
         <div style={{ paddingBottom: '100px' }}>
             <h1 style={{ marginBottom: '30px', fontSize: '1.8rem', fontWeight: 'bold' }}>Visual Analytics</h1>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
                 {/* Monthly Trend */}
                 <div className="card" style={{ gridColumn: 'span 2' }}>
                     <h3 style={{ marginBottom: '20px', fontSize: '1.1rem' }}>Monthly Spending Trend</h3>

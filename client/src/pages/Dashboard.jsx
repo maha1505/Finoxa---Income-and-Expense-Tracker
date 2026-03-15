@@ -313,7 +313,7 @@ const Dashboard = () => {
             </div>
 
             {/* Row 1: Main Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '20px' }}>
                 <div className="card" style={{ background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                         <div style={{ fontSize: '0.9rem', fontWeight: 500, color: '#065f46' }}>Total Income</div>
@@ -352,7 +352,7 @@ const Dashboard = () => {
             </div>
 
             {/* Row 2: Behavior Metrics */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '30px' }}>
                 {/* Discipline Streaks */}
                 <div className="card" style={{ background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
@@ -417,7 +417,7 @@ const Dashboard = () => {
             </div>
 
             {/* Charts Section */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px', marginBottom: '30px' }}>
+            <div className="dashboard-charts-grid">
                 <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                         <h3 style={{ fontSize: '1.1rem' }}>Spending Analysis</h3>

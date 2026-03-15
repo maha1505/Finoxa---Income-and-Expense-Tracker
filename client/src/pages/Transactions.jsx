@@ -128,9 +128,9 @@ const Transactions = () => {
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) 2fr', gap: '30px', alignItems: 'start' }}>
+            <div className="transactions-grid">
                 {/* Sidebar Form */}
-                <div className="card" style={{ position: 'sticky', top: '20px', padding: '25px' }}>
+                <div className="card" style={{ position: 'sticky', top: '20px', padding: '25px', zIndex: 10 }}>
                     <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '20px' }}>
                         {editingId ? 'Edit' : 'Add'} {formData.type === 'income' ? 'Income' : 'Expense'}
                     </h3>
